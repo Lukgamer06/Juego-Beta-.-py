@@ -1,0 +1,100 @@
+#Librerias y importacion a otro archivo .py
+import pygame
+import random
+from Objetivos_y_personaje import Nave,Enemigo_Down,Enemigo_Up,Enemigo_izq,Enemigo_der,Vidas_der,Vidas_Down,Vidas_izq,Vidas_Up
+
+pygame.init()
+#Ventana
+ANCHO   = 900
+ALTO    = 750
+VENTANA = pygame.display.set_mode([ANCHO,ALTO])
+FPS     = 60
+FUENTE  = pygame.font.SysFont("Times New Roman", 40)
+#Personajes
+Jugador  = Nave (ANCHO/2,ALTO/2)
+Enemigos = []
+Vidas_ext=[]
+#Tiempo
+reloj         = pygame.time.Clock()
+Tiempo_pas    = 0
+Tiempo_enemig = 250
+tiempo_pas2   = 0
+Tiempo_vidas  = 2500
+#vidas
+Vidas = 5
+#Teclas
+def gestionar_teclas(teclas):
+    if teclas[pygame.K_w]:
+        Jugador.y -= Jugador.velocidad
+    if teclas[pygame.K_s]:
+        Jugador.y += Jugador.velocidad
+    if teclas[pygame.K_d]:
+        Jugador.x += Jugador.velocidad
+    if teclas[pygame.K_a]:
+        Jugador.x -= Jugador.velocidad
+
+#Juego
+Jugando = True
+while Jugando and Vidas > 0:
+    #Tiempo
+    Tiempo_pas += reloj.tick(FPS)
+    tiempo_pas2 += reloj.tick(FPS)
+    #Aparicion de enemigos
+    if Tiempo_pas > Tiempo_enemig:
+        Enemigos.append(Enemigo_Down(random.randint(0,ANCHO),ALTO-100))
+        Enemigos.append(Enemigo_Up(random.randint(0,ANCHO),1))
+        Enemigos.append(Enemigo_izq(1,random.randint(0,ALTO)))
+        Enemigos.append(Enemigo_der(ANCHO+100,random.randint(0,ALTO)))
+        Tiempo_pas = 0
+    #Aparicion de vidas extras
+    if tiempo_pas2 > Tiempo_vidas:
+        lugar_de_aparicion = random.randint(0,3)
+        if lugar_de_aparicion == 0:
+            Vidas_ext.append(Vidas_izq(1,random.randint(0,ALTO)))
+        elif lugar_de_aparicion == 1:
+            Vidas_ext.append(Vidas_der(ANCHO+100,random.randint(0,ALTO)))
+        elif lugar_de_aparicion == 2:
+            Vidas_ext.append(Vidas_Up(random.randint(0,ANCHO),ALTO-100))
+        elif lugar_de_aparicion == 3:
+            Vidas_ext.append(Vidas_Down(random.randint(0,ANCHO),ALTO+100))
+        tiempo_pas2 = 0
+    #Teclas y eventos
+    eventos = pygame.event.get()
+    teclas = pygame.key.get_pressed()
+    gestionar_teclas(teclas)
+
+    #Texto en pantalla
+    texto_vida = FUENTE.render(f"vida: {Vidas}", True, "red")
+    
+    #Cerrar el juego
+    for evento in eventos:
+        if evento.type == pygame.QUIT:
+            Jugando = False
+    
+    #Personajes
+    VENTANA.fill ("black")
+    Jugador.dibujar(VENTANA)
+    #Enemigos
+    for enemigo in Enemigos:
+        enemigo.dibujar(VENTANA)
+        enemigo.movimiento()
+        #Sistema de colision y vidas
+        if pygame.Rect.colliderect(Jugador.rect,enemigo.rect):
+            Vidas -=1
+            Enemigos.remove(enemigo)
+    #Vidas extra
+    for vida in Vidas_ext:
+        vida.dibujar(VENTANA)
+        vida.movimiento()
+        #Sistema de colision y +vidas
+        if pygame.Rect.colliderect(Jugador.rect,vida.rect):
+            Vidas +=1
+            Vidas_ext.remove(vida)
+
+
+    VENTANA.blit(texto_vida,(20,20))
+
+
+    pygame.display.update()
+
+quit()
